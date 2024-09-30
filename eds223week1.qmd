@@ -1,0 +1,181 @@
+---
+title: "EDS-223-Week-1-Lab"
+author: "mish"
+format: html
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+# install packages
+
+install.packages("sf")
+install.packages("stars")
+install.packages("tmap")
+install.packages("terra")
+```
+
+```{r}
+install.packages("tmap")
+```
+
+```{r}
+# Load libraries
+
+library(sf)
+library(stars)
+library(tmap)
+library(here)
+```
+
+```{r}
+# Specifying spatial data
+
+# raster of global elevation
+
+world_elevation <- read_stars(here("data", "worldelevation.tif"))
+
+# country boundaries
+world_vector <- read_sf(here("data", "worldvector.gpkg"))
+
+# major cities
+world_cities <- read_sf(here("data", "worldcities.gpkg"))
+```
+
+```{r}
+# start plotting
+# whatever data set is plotted first defines extent of the map
+
+# defining data using `is.master`
+
+tm_shape(world_elevation) +
+  tm_raster() + # tells tmap how to plot world elevation
+tm_shape(world_vector) + # defines spatial object to plot (like data = ...)
+  tm_borders() + # defines how to plot (like geom_point)
+  tm_shape(world_cities, is.master = TRUE) + # defines object
+  tm_dots() # defines how to plot above object
+  
+```
+
+```{r}
+# another way to define extent using bbox and coordinated
+tm_shape(world_elevation, bbox = c(-15, 35, 45, 65) ) +
+  tm_raster() +
+tm_shape(world_vector) + 
+  tm_borders()
+
+# another way to define  using bbox and an object
+tm_shape(world_elevation, bbox = world_cities) +
+  tm_raster() +
+tm_shape(world_vector) + 
+  tm_borders()
+```
+
+```{r}
+# customizing! (compare to ggplot)
+tm_shape(world_vector) +
+  tm_polygons(col = 'lightblue', 
+              border.col = 'black',
+              lwd = 0.5, # lwd = line width
+              lty = 'dashed') # lty = line type
+```
+
+```{r}
+# plot only the outside
+tm_shape(world_vector) +
+  tm_borders(col = 'red')
+```
+
+```{r}
+# plot only the inside
+tm_shape(world_vector) +
+  tm_fill(col = 'lightblue')
+```
+
+```{r}
+# plot things using variables!
+
+tm_shape(world_vector) +
+  tm_fill("CO2_emissions")
+```
+
+```{r}
+# using symbols
+
+# shape used for qualitative info
+
+tm_shape(world_cities) +
+  tm_squares() #dots, symbol, bubbles, squares
+```
+
+```{r}
+# using color
+tm_shape(world_vector) +
+  tm_polygons("life_expectancy",
+              palette = c("yellow", "darkgreen"),
+              title = "Life Expectancy (years)")
+```
+
+```{r}
+# explore viridis package
+install.packages("viridisLite")
+library(viridisLite)
+
+tm_shape(world_vector) +
+  tm_polygons("life_expectancy",
+              palette = viridis(8),
+              title = "Life Expectancy (years)")
+```
+
+```{r}
+# explore size
+
+tm_shape(world_vector) +
+  tm_polygons(col = "lightblue") +
+tm_shape(world_cities) +
+  tm_symbols(size = "pop2020",
+             legend.size.is.portrait = TRUE)
+```
+
+```{r}
+# grid lines
+tm_shape(world_vector) +
+  tm_graticules() + #also can use grid. Current shows lat/lon
+  tm_fill()
+
+```
+
+```{r}
+# scale bar and north arrow
+
+tm_shape(world_vector) +
+  tm_fill() +
+  tm_scale_bar() +
+  tm_compass(position = c('left', 'top'))
+```
+
+```{r}
+# More layout options
+
+# make interactive
+tmap_mode("view")
+
+map1 <- tm_shape(world_vector) +
+  tm_fill(col = "wb_income_region",
+          palette = viridisLite::plasma(5),
+          title = "Regional Income") +
+  tm_layout(bg.color = 'gray95',
+            main.title = "Global income by country",
+            frame = FALSE)
+
+# make static map
+tmap_mode('plot')
+```
+
+```{r}
+# saving maps
+
+tmap_save(map1, here("tmap-example.png"))
+
+```
+
